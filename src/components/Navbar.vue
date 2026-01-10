@@ -1,14 +1,33 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/breathing">Breathing</router-link> |
-    <router-link to="/wellness">Wellness</router-link> |
-    <router-link to="/ai-support">AI Support</router-link>
+  <nav class="navbar">
+    <router-link to="/" class="nav-link">Home</router-link>
+    <router-link to="/breathing" class="nav-link">Breathing</router-link>
+    <router-link to="/wellness" class="nav-link">Wellness</router-link>
+    <router-link to="/ai-support" class="nav-link">AI Support</router-link>
   </nav>
 </template>
 
+<script>
+export default {
+  name: 'Navbar',
+}
+</script>
+
 <style scoped>
-nav { padding: 1rem; background: #f4f4f4; }
-a { margin: 0 10px; text-decoration: none; color: #42b983; }
-.router-link-active { font-weight: bold; border-bottom: 2px solid #42b983; }
+.navbar {
+  background-color: #4CAF50;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nav-link.router-link-exact-active {
+  text-decoration: underline;
+}
 </style>

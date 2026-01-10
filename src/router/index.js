@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+// Ensure these paths match your actual filenames in src/views/
 import Home from '../views/Home.vue'
 import Breathing from '../views/Breathing.vue'
 import Wellness from '../views/Wellness.vue'
@@ -16,4 +17,5 @@ const router = createRouter({
   routes,
 })
 
+// THIS LINE IS REQUIRED
 export default router
