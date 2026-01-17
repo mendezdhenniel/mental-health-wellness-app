@@ -1,193 +1,113 @@
-<template>
-  <div class="ai-container">
-    <header class="header-card">
-      <div class="ai-avatar pulse">🤖</div>
-      <h1>AI Support Companion</h1>
-      <p>A safe space to talk, 24/7. Your conversations are private and supportive.</p>
-    </header>
+<script setup>
+import { ref, computed } from 'vue'
+import { getAiMessage } from '../services/aiService'
 
-    <div class="chat-window">
-      <div class="message bot fade-in">
-        <div class="msg-content">
-          Hello! I'm your wellness assistant. How are you feeling today?
-        </div>
-        <span class="timestamp">Just now</span>
+// State
+const mood = ref("")
+const aiMessage = ref("")
+const loading = ref(false)
+const history = ref([])
+const isOfflineMode = ref(false)
+const charLimit = 150
+
+// Challenge: Categories
+const categories = ['Stressed', 'Sad', 'Tired', 'Anxious']
+
+const setMood = (cat) => {
+  mood.value = `I am feeling ${cat.toLowerCase()}.`
+}
+
+// Challenge: Validation
+const isOverLimit = computed(() => mood.value.length > charLimit)
+
+const askAI = async () => {
+  if (!mood.value || isOverLimit.value) return
+  loading.value = true
+  
+  const response = await getAiMessage(mood.value, isOfflineMode.value)
+  
+  aiMessage.value = response
+  loading.value = false
+
+  // Challenge: History List
+  history.value.unshift({
+    id: Date.now(),
+    text: response,
+    timestamp: new Date().toLocaleTimeString(),
+    reaction: null
+  })
+}
+
+// Challenge: Emoji Reactions
+const addReaction = (item, emoji) => {
+  item.reaction = emoji
+}
+</script>
+
+<template>
+  <div class="p-6 max-w-2xl mx-auto bg-slate-50 min-h-screen">
+    <div class="bg-white p-8 rounded-3xl shadow-lg">
+      <h1 class="text-3xl font-bold mb-2 text-indigo-800">AI Mood Support</h1>
+      
+      <div class="flex items-center gap-3 mb-6 bg-indigo-50 p-3 rounded-xl">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="isOfflineMode" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+        </label>
+        <span class="text-sm font-medium text-indigo-700">
+          {{ isOfflineMode ? 'Offline Mode (Local)' : 'Online Mode (Groq AI)' }}
+        </span>
       </div>
 
-      <div class="message system fade-in-delayed">
-        <div class="typing-indicator">
-          <span></span><span></span><span></span>
-        </div>
-        <p>AI is thinking... (Integration coming in next lab)</p>
+      <div class="flex gap-2 mb-4">
+        <button v-for="cat in categories" :key="cat" @click="setMood(cat)"
+          class="px-4 py-2 bg-white border border-indigo-200 rounded-full text-sm hover:bg-indigo-600 hover:text-white transition">
+          {{ cat }}
+        </button>
+      </div>
+
+      <div class="relative">
+        <textarea v-model="mood" 
+          class="border-2 p-4 w-full rounded-2xl focus:ring-2 focus:ring-indigo-400 outline-none transition"
+          :class="isOverLimit ? 'border-red-400' : 'border-indigo-100'"
+          rows="3" placeholder="How are you feeling?"></textarea>
+        <p class="text-right text-xs mt-1" :class="isOverLimit ? 'text-red-500 font-bold' : 'text-gray-400'">
+          {{ mood.length }} / {{ charLimit }}
+        </p>
+      </div>
+
+      <div class="flex gap-2">
+        <button @click="askAI" :disabled="loading || isOverLimit || !mood"
+          class="mt-4 flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition">
+          {{ loading ? 'Thinking...' : 'Get Support Message' }}
+        </button>
+        <button v-if="aiMessage && !loading" @click="askAI" 
+          class="mt-4 px-6 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+          🔄
+        </button>
+      </div>
+
+      <div v-if="aiMessage" class="mt-8 p-6 bg-indigo-50 border-l-8 border-indigo-400 rounded-xl">
+        <p class="italic text-indigo-900 text-lg">"{{ aiMessage }}"</p>
       </div>
     </div>
 
-    <div class="action-box">
-      <div class="input-mockup">
-        <input type="text" placeholder="Type your message..." disabled />
-        <button class="send-btn">
-          <svg viewBox="0 0 24 24" width="20" height="20">
-            <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
-          </svg>
-        </button>
+    <div v-if="history.length > 0" class="mt-10">
+      <h2 class="font-bold text-gray-500 uppercase tracking-widest text-sm mb-4">Recent Support</h2>
+      <div class="space-y-4">
+        <div v-for="item in history" :key="item.id" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+          <p class="text-gray-700 mb-3">{{ item.text }}</p>
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] text-gray-400">{{ item.timestamp }}</span>
+            
+            <div class="flex gap-2">
+              <span v-if="item.reaction" class="text-lg mr-2">{{ item.reaction }}</span>
+              <button @click="addReaction(item, '❤️')" class="hover:scale-125 transition">❤️</button>
+              <button @click="addReaction(item, '🙏')" class="hover:scale-125 transition">🙏</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="disclaimer">
-        ⚠️ <strong>Note:</strong> This AI is for support, not a replacement for professional medical advice.
-      </p>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Container Setup */
-.ai-container {
-  max-width: 650px;
-  margin: 40px auto;
-  padding: 0 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* Header Styling */
-.header-card {
-  text-align: center;
-  background: white;
-  padding: 30px;
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-  margin-bottom: 30px;
-  border: 1px solid #f0f4f8;
-}
-
-.ai-avatar {
-  font-size: 3.5rem;
-  margin-bottom: 15px;
-  display: inline-block;
-}
-
-.pulse {
-  animation: shadow-pulse 2s infinite;
-  border-radius: 50%;
-}
-
-@keyframes shadow-pulse {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(74, 144, 226, 0.4)); }
-  70% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(74, 144, 226, 0)); }
-  100% { transform: scale(1); }
-}
-
-h1 {
-  color: #1a2b4b;
-  font-size: 1.8rem;
-  margin-bottom: 8px;
-}
-
-/* Chat Window Area */
-.chat-window {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background: #f8fafc;
-  padding: 25px;
-  border-radius: 24px;
-  min-height: 300px;
-  border: 1px solid #edf2f7;
-}
-
-.message {
-  max-width: 85%;
-  position: relative;
-}
-
-.bot .msg-content {
-  background: white;
-  color: #2d3748;
-  padding: 14px 20px;
-  border-radius: 18px 18px 18px 4px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-  line-height: 1.5;
-  border: 1px solid #e2e8f0;
-}
-
-.timestamp {
-  font-size: 0.7rem;
-  color: #a0aec0;
-  margin-top: 5px;
-  display: block;
-}
-
-/* Typing Indicator Animation */
-.system {
-  align-self: center;
-  text-align: center;
-  color: #718096;
-  font-style: italic;
-  font-size: 0.9rem;
-}
-
-.typing-indicator span {
-  height: 8px;
-  width: 8px;
-  background: #cbd5e0;
-  display: inline-block;
-  border-radius: 50%;
-  margin: 0 2px;
-  animation: bounce 1.4s infinite ease-in-out;
-}
-
-.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-8px); }
-}
-
-/* Input Area Mockup */
-.input-mockup {
-  display: flex;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 100px;
-  padding: 8px 8px 8px 20px;
-  margin-top: 25px;
-  transition: border-color 0.3s;
-}
-
-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 1rem;
-  background: transparent;
-}
-
-.send-btn {
-  background: #4a90e2;
-  color: white;
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.disclaimer {
-  font-size: 0.8rem;
-  color: #a0aec0;
-  margin-top: 15px;
-  line-height: 1.4;
-}
-
-/* Animations */
-.fade-in { animation: fadeIn 0.5s ease-out; }
-.fade-in-delayed { animation: fadeIn 0.5s ease-out 1s both; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-</style>

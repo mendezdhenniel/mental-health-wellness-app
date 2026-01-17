@@ -1,21 +1,35 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// Ensure these paths match your actual filenames in src/views/
-import Home from '../views/Home.vue'
-import Breathing from '../views/Breathing.vue'
-import Wellness from '../views/Wellness.vue'
-import AiSupport from '../views/AiSupport.vue'
 
+// 1. Define your routes
+// Using dynamic imports (component: () => import(...)) for better performance
 const routes = [
-  { path: '/', component: Home },
-  { path: '/breathing', component: Breathing },
-  { path: '/wellness', component: Wellness },
-  { path: '/ai-support', component: AiSupport },
+  { 
+    path: '/', 
+    name: 'Home',
+    component: () => import('../views/Home.vue') 
+  },
+  { 
+    path: '/breathing', 
+    name: 'Breathing',
+    component: () => import('../views/Breathing.vue') 
+  },
+  { 
+    path: '/wellness', 
+    name: 'Wellness',
+    component: () => import('../views/Wellness.vue') 
+  },
+  { 
+    path: '/ai-support', 
+    name: 'AiSupport',
+    component: () => import('../views/AiSupport.vue') 
+  }
 ]
 
+// 2. Create the router instance
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(), // Uses the browser's history API for clean URLs (no #)
   routes,
 })
 
-// THIS LINE IS REQUIRED
+// 3. Export the router so main.js can use it
 export default router
